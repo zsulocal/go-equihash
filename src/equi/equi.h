@@ -21,8 +21,8 @@
 
 #include "endian.h"
 
-#define N 200
-#define K 9
+#define N 96
+#define K 5
 
 static const uint32_t PROOFSIZE = 1 << K;
 static const uint32_t le_N = htole32(N);
@@ -34,7 +34,7 @@ static void digestInit(crypto_generichash_blake2b_state *S) {
   memcpy(personalization + 8,  &le_N, 4);
   memcpy(personalization + 12, &le_K, 4);
   crypto_generichash_blake2b_init_salt_personal(S,
-    NULL, 0, (PROOFSIZE / N) * N / 8, NULL, personalization);
+    NULL, 0, (512 / N) * N / 8, NULL, personalization);
 }
 
 static void expandArray(const unsigned char *in, const size_t in_len,
@@ -119,7 +119,7 @@ bool verify(const char *hdr, const char *soln) {
   const int collisionBitLength  = N / (K + 1);
   const int collisionByteLength = (collisionBitLength + 7) / 8;
   const int hashLength = (K + 1) * collisionByteLength;
-  const int indicesPerHashOutput = PROOFSIZE / N;
+  const int indicesPerHashOutput = 512 / N;
   const int hashOutput = indicesPerHashOutput * N / 8;
   const int equihashSolutionSize = (1 << K) * (N / (K + 1) + 1) / 8;
 
@@ -127,7 +127,7 @@ bool verify(const char *hdr, const char *soln) {
 
   crypto_generichash_blake2b_state state;
   digestInit(&state);
-  crypto_generichash_blake2b_update(&state, hdr, 140);
+  crypto_generichash_blake2b_update(&state, hdr, 212);
 
   expandArray(soln, equihashSolutionSize, (char *)&indices, sizeof(indices), collisionBitLength + 1, 1);
 
